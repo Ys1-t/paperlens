@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>PaperLens 设置</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="wrap">
+    <h1>📖 PaperLens 设置</h1>
+    <p class="sub">配置翻译使用的大模型服务。DeepSeek 官方、OpenAI 及各类「中转站 / 代理」均可使用。</p>
+
+    <section class="card">
+      <h2>模型服务</h2>
+
+      <div class="profile-panel">
+        <div class="profile-heading">
+          <span class="profile-title">Provider Profile</span>
+          <span id="profile-active" class="profile-badge"></span>
+        </div>
+        <label class="field profile-select-field">
+          <span>正在编辑</span>
+          <select id="profile-select" aria-label="选择 Provider Profile"></select>
+        </label>
+        <div class="profile-actions" aria-label="Profile 管理">
+          <button type="button" id="profile-set-active" class="mini primary">设为当前</button>
+          <button type="button" id="profile-new" class="mini">新建</button>
+          <button type="button" id="profile-copy" class="mini">复制</button>
+          <button type="button" id="profile-rename" class="mini">重命名</button>
+          <button type="button" id="profile-delete" class="mini ghost">删除</button>
+        </div>
+        <p id="profile-result" class="test-result profile-result" role="status" aria-live="polite"></p>
+      </div>
+
+      <label class="field">
+        <span>服务商预设</span>
+        <select id="provider"></select>
+      </label>
+      <p class="hint" id="provider-hint"></p>
+
+      <label class="field">
+        <span>协议</span>
+        <select id="protocol">
+          <option value="openai">OpenAI 兼容（Chat Completions）</option>
+          <option value="gemini">Gemini（原生 generateContent）</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Base URL</span>
+        <input type="text" id="baseUrl" placeholder="https://api.deepseek.com" />
+      </label>
+
+      <label class="field">
+        <span>API Key</span>
+        <span class="key-row">
+          <input type="password" id="apiKey" placeholder="sk-..." />
+          <button type="button" id="toggle-key" class="mini">显示</button>
+        </span>
+      </label>
+      <p id="api-key-local-warning" class="local-warning">
+        🔒 API Key 仅保存在本机的扩展存储中，不会参与浏览器同步。连接测试使用当前表单的临时值，不会自动保存；诊断内容会隐藏密钥。
+      </p>
+
+      <label class="field">
+        <span>模型</span>
+        <span class="key-row">
+          <input type="text" id="model" list="model-list" placeholder="deepseek-chat" />
+          <datalist id="model-list"></datalist>
+        </span>
+      </label>
+
+      <div class="row">
+        <button type="button" id="test" class="primary">测试连接</button>
+        <span id="test-result" class="test-result" role="status" aria-live="polite"></span>
+      </div>
+
+      <div class="selftest">
+        <div class="row">
+          <button id="selftest" class="ghost-accent">原始自检</button>
+          <span class="hint inline-hint">直接从本页 fetch 目标接口（绕过 Service Worker），用于隔离「API/Key/URL 问题」还是「扩展内部管线问题」。</span>
+        </div>
+        <pre id="selftest-out" class="selftest-out" role="status" aria-live="polite" hidden></pre>
+        <div class="row" id="diag-row" hidden>
+          <button id="copy-diag" class="mini">复制诊断</button>
+          <span id="copy-diag-result" class="test-result" role="status" aria-live="polite"></span>
+        </div>
+        <textarea id="diag-report" class="diag-report" readonly hidden></textarea>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>翻译选项</h2>
+      <label class="field">
+        <span>目标语言</span>
+        <input type="text" id="targetLang" placeholder="简体中文" />
+      </label>
+      <label class="field inline">
+        <span>温度（0–1，越低越稳定）</span>
+        <input type="number" id="temperature" min="0" max="2" step="0.1" />
+      </label>
+      <label class="field inline">
+        <span>并发请求数（1–16）</span>
+        <input type="number" id="concurrency" min="1" max="16" step="1" />
+      </label>
+      <label class="check">
+        <input type="checkbox" id="stream" /> <span>流式输出（打字机效果，推荐开启）</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="selectionTranslate" /> <span>划词即时翻译（在左栏 PDF 拖选文字，浮层立即显示译文；双击定位不受影响）</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="bilingual" /> <span>原文对照：勾选后每段译文下方显示一行灰色英文原文，取消勾选即隐藏（保存后立即生效，已打开的阅读页同步更新）</span>
+      </label>
+
+      <details class="adv">
+        <summary>高级：自定义翻译提示词（System Prompt）</summary>
+        <textarea id="systemPrompt" rows="6" placeholder="留空则使用内置的学术翻译提示词。"></textarea>
+      </details>
+    </section>
+
+    <section class="card" id="section-chat-assistant">
+      <h2>🤖 AI 助手（对话 API 可与翻译分开）</h2>
+      <p class="hint">
+        阅读器右侧「科研助手」走独立的对话接口，<b>可以与翻译使用不同的 API / 模型</b>。
+        例如：翻译用便宜视觉模型，助手用更强的推理模型。
+      </p>
+      <label class="check">
+        <input type="checkbox" id="chatAssistant" />
+        <span>启用 AI 助手（工具栏显示「AI 助手」入口；划词可「问 AI」）</span>
+      </label>
+      <label class="field">
+        <span>助手使用的模型 Profile</span>
+        <select id="chatProfileId" aria-label="AI 助手模型 Profile"></select>
+      </label>
+      <ol class="hint steps-hint">
+        <li>在上方 <b>模型服务 → Provider Profile</b> 里 <b>新建</b> 一套（例如命名为「助手-强模型」），填好 Base URL、API Key、模型，点保存。</li>
+        <li>翻译仍用「设为当前」的那一套 Profile。</li>
+        <li>在本下拉框选择刚才那套 Profile（不要选「与翻译当前 Profile 相同」）。</li>
+        <li>点页面底部 <b>保存</b>。打开阅读器后，助手标题下会显示「对话：xxx · 模型名」。</li>
+      </ol>
+      <p class="hint">
+        默认「与翻译当前 Profile 相同」：不另配时，助手与翻译共用同一 Key/模型。
+        对话请求不写入翻译缓存；Key 仅保存在本机扩展存储。
+      </p>
+    </section>
+
+    <section class="card" id="section-obsidian">
+      <h2>📓 Obsidian 本地库（科研笔记）</h2>
+      <p class="hint">
+        <b>推荐：直接写入你的 Obsidian 库文件夹</b>（无需插件、无需 API）。
+        文件会出现在 <code>库/PaperLens/论文标题.md</code>，用 Obsidian 打开即可阅读与继续编辑。
+      </p>
+      <label class="check">
+        <input type="checkbox" id="obsidianEnabled" />
+        <span>启用写入 Obsidian</span>
+      </label>
+      <label class="field">
+        <span>笔记子目录（库内相对路径）</span>
+        <input type="text" id="obsidianFolder" placeholder="PaperLens" spellcheck="false" />
+      </label>
+      <div class="field-row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0;">
+        <button type="button" id="pick-obsidian-vault" class="ghost">选择库文件夹…</button>
+        <button type="button" id="clear-obsidian-vault" class="ghost">清除选择</button>
+        <span id="obsidian-vault-status" class="test-result" role="status" aria-live="polite"></span>
+      </div>
+      <ol class="hint steps-hint">
+        <li>勾选「启用写入 Obsidian」，点 <b>选择库文件夹</b>，选中你的 <b>Obsidian vault 根目录</b>（里面有 <code>.obsidian</code> 的那一层）。</li>
+        <li>点页面底部 <b>保存</b>。</li>
+        <li>阅读器「科研助手 → 笔记」点 <b>Obsidian</b>，笔记会写入 <code>PaperLens/论文名.md</code>。</li>
+        <li>回到 Obsidian 即可看到新文件（若未出现，在文件列表刷新或切换一下文件夹）。</li>
+      </ol>
+      <details class="adv">
+        <summary>高级：Local REST API（可选，一般不必）</summary>
+        <p class="hint">仅在无法使用「选择文件夹」时再配。请勿把翻译模型的 Base URL 填到这里。</p>
+        <label class="field">
+          <span>Local REST API 地址</span>
+          <input type="text" id="obsidianBaseUrl" placeholder="http://127.0.0.1:27123" spellcheck="false" />
+        </label>
+        <label class="field">
+          <span>API Key</span>
+          <input type="password" id="obsidianApiKey" placeholder="Obsidian → Local REST API 插件中的 Key" spellcheck="false" autocomplete="off" />
+        </label>
+        <button type="button" id="probe-obsidian" class="ghost">测试 REST 连接</button>
+        <span id="probe-obsidian-result" class="test-result" role="status" aria-live="polite"></span>
+      </details>
+    </section>
+
+    <section class="card" id="section-glossary">
+      <h2>术语表（锁定译法）</h2>
+      <p class="hint">
+        在阅读器里划词翻译后点「锁定术语」，或在下方手动添加。锁定的术语会强制注入之后的整页翻译与划词翻译，
+        保证全文乃至跨论文译法一致。已翻译的页面需重新翻译才会生效。
+      </p>
+      <div class="glossary-add">
+        <input type="text" id="glossary-term" placeholder="原文术语，如 attention head" spellcheck="false" />
+        <input type="text" id="glossary-translation" placeholder="锁定译法，如 注意力头" spellcheck="false" />
+        <button type="button" id="glossary-add-btn" class="ghost">添加 / 更新</button>
+      </div>
+      <ul id="glossary-list" class="glossary-list"></ul>
+      <p class="hint"><span id="glossary-count">0</span> / 200 条 <button type="button" id="glossary-clear" class="ghost">清空术语表</button></p>
+    </section>
+
+    <section class="card" id="section-usage">
+      <h2>用量统计（估算）</h2>
+      <p class="hint">
+        按字符启发式估算 token（整页视觉翻译另计约 1100 tok/页 的图片开销），
+        仅供预算参考，实际以服务商账单为准。填入单价可折算花费。
+      </p>
+      <p class="usage-line">
+        累计请求 <b id="usage-requests">0</b> 次 ·
+        输入 ≈ <b id="usage-in">0</b> tok ·
+        输出 ≈ <b id="usage-out">0</b> tok ·
+        今日 <b id="usage-today">0</b> 次
+      </p>
+      <div class="usage-price-row">
+        <label class="usage-price">输入 ¥/百万 tok
+          <input type="number" id="usage-price-in" min="0" step="0.1" placeholder="如 2" />
+        </label>
+        <label class="usage-price">输出 ¥/百万 tok
+          <input type="number" id="usage-price-out" min="0" step="0.1" placeholder="如 8" />
+        </label>
+        <span class="usage-cost">估算花费：<b id="usage-cost">—</b></span>
+      </div>
+      <button type="button" id="usage-reset" class="ghost">清零统计</button>
+    </section>
+
+    <section class="card">
+      <h2>缓存</h2>
+      <p class="hint">译文会缓存到本地，重复段落不再重复请求 API。当前缓存条目：<b id="cache-count">…</b></p>
+      <button id="clear-cache" class="ghost">清空翻译缓存</button>
+    </section>
+
+    <div class="footer">
+      <button id="save" class="primary big">保存设置</button>
+      <span id="save-result" class="test-result" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

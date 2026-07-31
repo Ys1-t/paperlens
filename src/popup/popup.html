@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>PaperLens</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="pop">
+    <div class="head">
+      <span class="brand">📄 PaperLens</span>
+      <button id="settings" class="link" title="设置">⚙</button>
+    </div>
+
+    <section class="provider-card" aria-label="模型 Profile">
+      <label for="popup-profile-select">模型 Profile</label>
+      <span id="popup-model-status" class="model-status" aria-live="polite"></span>
+      <select id="popup-profile-select"></select>
+      <p id="status" class="status"></p>
+      <p id="switch-message" class="switch-message" aria-live="polite"></p>
+    </section>
+
+    <button id="translate-current" class="big-btn">翻译当前页面的 PDF</button>
+    <div id="current-info" class="info"></div>
+
+    <div class="divider"></div>
+
+    <button id="open-local" class="big-btn secondary">打开本地 PDF（在阅读器中选择）</button>
+
+    <div class="url-row">
+      <input type="url" id="url" placeholder="粘贴 PDF 链接…" />
+      <button id="url-go">打开</button>
+    </div>
+    <button id="demo-link" class="demo-link" type="button" title="用一篇经典论文体验双语阅读">没有论文？试读 arXiv 经典《Attention Is All You Need》→</button>
+
+    <section id="recent-section" class="recent-card" aria-label="最近阅读" hidden>
+      <div class="recent-head">最近阅读</div>
+      <ul id="recent-list" class="recent-list"></ul>
+    </section>
+
+    <button id="open-diagnostics" class="diagnostics-btn">查看 / 复制异常诊断</button>
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
