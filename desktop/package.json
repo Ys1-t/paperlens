@@ -4,12 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "description": "PaperLens Desktop — 论文阅读 + 真 agent 智能体（联网检索/知识库）。独立于浏览器扩展开发，参考其成熟翻译逻辑（src/lib）。",
-  "main": "main.js",
+  "main": "main.cjs",
   "scripts": {
     "start": "electron .",
     "agent": "node scripts/agent-cli.mjs"
   },
   "devDependencies": {
-    "electron": "^33.0.0"
+    "electron": "^33.0.0",
+    "playwright-core": "^1.62.1"
   }
 }

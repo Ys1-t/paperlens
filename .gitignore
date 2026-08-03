@@ -32,3 +32,4 @@ mobile/package-lock.json
 .playwright-cli/
 desktop/agent.config.json
 desktop/node_modules/
+desktop/shot-*.png

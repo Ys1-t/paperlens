@@ -85,6 +85,17 @@ html, body {
   background: #eef6f2; color: var(--brand); font-size: 13.5px; text-align: center;
 }
 
+/* 算法伪代码块（共享渲染器 hydrateAlgorithmFences 输出；KaTeX 可进入渲染行内公式） */
+.mm-algorithm {
+  background: #f6f7f9; border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 14px; margin: 10px 0; overflow-x: auto;
+  font-size: 13.5px; line-height: 1.85;
+}
+.mm-algorithm-line { white-space: pre-wrap; }
+.math-incomplete {
+  background: #fef8e7; border-bottom: 1px dashed var(--accent-warm, #b7791f);
+}
+
 /* 段落级原文对照：主译文下方浅色英文，全局开关控制显隐 */
 .src-para {
   display: block; color: var(--src); font-size: 13px; line-height: 1.55;

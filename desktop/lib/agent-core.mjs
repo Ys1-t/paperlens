@@ -33,9 +33,9 @@ export function agentSystemPrompt({ targetLang = '简体中文', paperTitle = ''
     paperTitle ? `当前打开的论文：《${paperTitle}》。` : '当前没有打开论文。',
     '',
     '能力边界与诚实原则：',
-    '- 论文内问题：用论文工具取证，结论标注「第 N 页」。',
+    '- 论文内问题：先 get_paper_overview 了解结构，再 read_paper_page / search_paper_text 取证，结论标注「第 N 页」。',
     '- 论文外问题（引用文献讲什么 / 相关工作 / 概念溯源）：必须用联网工具（lookup_citation / search_arxiv / fetch_url）查到原始来源再回答，并给出来源链接。',
-    '- 用户问「文献 [N] / 这篇引用」时：先在本论文参考文献页找到该条目的标题作者，再 lookup_citation 查它本身——绝不能只复述本论文对它的转述。',
+    '- 用户问「文献 [N] / 这篇引用」时：先 search_paper_text 在参考文献里找到该条目的标题作者，再 lookup_citation 查它本身——绝不能只复述本论文对它的转述。',
     '- 区分三种来源并明确标注：本论文内容（页码）、外部文献（链接）、你的推断。',
     '- 查不到就说查不到；不编造标题、作者、结论或链接。',
     '- 回答用短标题 + 分点，公式用 $...$ / $$...$$。',
@@ -57,7 +57,11 @@ export async function runAgentTurn({
   const turns = [...messages];
   const trace = [];
   for (let round = 0; round < maxRounds; round += 1) {
-    const reply = await chatFn({ messages: turns, tools: registry.toOpenAiTools() });
+    const reply = await chatFn({
+      messages: turns,
+      tools: registry.toOpenAiTools(),
+      onDelta: (delta) => onEvent('delta', { delta }),
+    });
     const toolCalls = reply?.tool_calls || [];
     if (!toolCalls.length) {
       const answer = String(reply?.content || '').trim();
@@ -115,5 +119,61 @@ export function createOpenAiChat({ baseUrl, apiKey, model, fetchImpl = fetch }) 
     }
     const data = await response.json();
     return data?.choices?.[0]?.message || { content: '' };
+  };
+}
+
+/**
+ * 流式 chat（SSE）：正文增量经 onDelta 实时回调（工具调用轮之间也在吐字），
+ * tool_calls 按 index 聚合增量拼装。返回值与非流式 chatFn 相同结构。
+ * 设计参考 Grok Build：agent 循环中「思考正文」与「工具调用」同流交织展示。
+ */
+export function createOpenAiStreamingChat({ baseUrl, apiKey, model, fetchImpl = fetch }) {
+  const root = String(baseUrl || '').replace(/\/+$/, '');
+  return async function chatFn({ messages, tools, onDelta = () => {} }) {
+    const response = await fetchImpl(`${root}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        messages,
+        ...(tools?.length ? { tools, tool_choice: 'auto' } : {}),
+        temperature: 0.3,
+        stream: true,
+      }),
+    });
+    if (!response.ok || !response.body) {
+      const body = (await response.text().catch(() => '')).slice(0, 400);
+      throw new Error(`模型请求失败 HTTP ${response.status}：${body}`);
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let content = '';
+    const toolCalls = [];
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const payload = line.replace(/^data:\s*/, '').trim();
+        if (!payload || payload === '[DONE]') continue;
+        let chunk;
+        try { chunk = JSON.parse(payload); } catch { continue; }
+        const delta = chunk?.choices?.[0]?.delta;
+        if (!delta) continue;
+        if (delta.content) { content += delta.content; onDelta(delta.content); }
+        for (const tc of delta.tool_calls || []) {
+          const i = Number(tc.index) || 0;
+          toolCalls[i] ||= { id: '', function: { name: '', arguments: '' } };
+          if (tc.id) toolCalls[i].id = tc.id;
+          if (tc.function?.name) toolCalls[i].function.name += tc.function.name;
+          if (tc.function?.arguments) toolCalls[i].function.arguments += tc.function.arguments;
+        }
+      }
+    }
+    const calls = toolCalls.filter((c) => c?.function?.name);
+    return { content, ...(calls.length ? { tool_calls: calls } : {}) };
   };
 }

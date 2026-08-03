@@ -123,3 +123,33 @@ test('web tool defs declare valid schemas for function calling', () => {
     assert.ok(typeof def.run === 'function');
   }
 });
+
+// 流式 chat：SSE 增量正文 + 分片 tool_calls 聚合。
+test('streaming chat assembles deltas and fragmented tool calls', async () => {
+  const { createOpenAiStreamingChat } = await import('../desktop/lib/agent-core.mjs');
+  const sse = [
+    'data: {"choices":[{"delta":{"content":"先查"}}]}',
+    'data: {"choices":[{"delta":{"content":"一下。"}}]}',
+    'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"c1","function":{"name":"lookup_","arguments":"{\\"refe"}}]}}]}',
+    'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"name":"citation","arguments":"rence\\":\\"DRL-MOA\\"}"}}]}}]}',
+    'data: [DONE]',
+    '',
+  ].join('\n');
+  const fetchImpl = async () => ({
+    ok: true,
+    body: new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(sse));
+        controller.close();
+      },
+    }),
+  });
+  const chatFn = createOpenAiStreamingChat({ baseUrl: 'http://x/v1', apiKey: 'k', model: 'm', fetchImpl });
+  const deltas = [];
+  const reply = await chatFn({ messages: [], tools: [], onDelta: (d) => deltas.push(d) });
+  assert.equal(deltas.join(''), '先查一下。');
+  assert.equal(reply.content, '先查一下。');
+  assert.equal(reply.tool_calls.length, 1);
+  assert.equal(reply.tool_calls[0].function.name, 'lookup_citation');
+  assert.deepEqual(JSON.parse(reply.tool_calls[0].function.arguments), { reference: 'DRL-MOA' });
+});

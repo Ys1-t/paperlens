@@ -11,11 +11,11 @@ import {
   assessVisionTranslationQuality,
   buildVisionTranslationContext,
   finalizeReadingTranslation,
-  sanitizeMarkedHtml,
   selectVisionRenderWidth,
 } from '../src/lib/reading-mode.js';
 import { parsePaperPack } from '../src/lib/paper-pack.js';
 import { glossaryFingerprintForText, normalizeGlossary } from '../src/lib/glossary.js';
+import { renderMarkdownWithMath } from '../src/lib/markdown-math.js';
 
 const CONFIG_KEY = 'paperlens.app.config.v1';
 const RESUME_KEY = 'paperlens.app.resume.v1';
@@ -199,7 +199,9 @@ async function openPdfFile(file, { pack = null } = {}) {
     const shotWrap = document.createElement('div');
     shotWrap.className = 'page-shot-wrap';
     shotWrap.hidden = true;
-    card.append(head, body, shotWrap);
+    // 原版图放在页头正下方（译文上方）：点「看原版」立即可见——
+    // 曾放卡片底部，长译文页时图在视口外，看起来像按钮没反应。
+    card.append(head, shotWrap, body);
     els.pages.appendChild(card);
     const page = {
       num, card, body, statusEl: status, shotWrap, translated: '', started: false, sourceText: '',
@@ -437,30 +439,19 @@ function failPageUi(page, message) {
 // 渲染：Markdown + KaTeX + 媒体 token 占位
 // ---------------------------------------------------------------------------
 function renderTranslation(page, markdown, { streaming = false } = {}) {
-  const source = String(markdown || '');
   const marked = window.marked?.parse ? window.marked : (typeof window.marked === 'function' ? { parse: window.marked } : null);
-  let html = '';
-  try { html = marked ? marked.parse(source) : ''; } catch { html = ''; }
-  html = sanitizeMarkedHtml(html)
-    .replaceAll('@@FIGURE@@', '<span class="media-token">🖼 图 · 点本页「看原版」查看</span>')
-    .replaceAll('@@TABLE@@', '<span class="media-token">▤ 表 · 点本页「看原版」查看</span>');
+  // 共享渲染管线（src/lib/markdown-math.js）：公式先占位保护再过 marked
+  // （防止 $..$ 里的 * _ [ ] 被当 Markdown 语法拆散），```algorithm 围栏
+  // 提升为普通块（KaTeX auto-render 默认跳过 pre/code），最后 KaTeX。
+  renderMarkdownWithMath(page.body, markdown, {
+    parse: (s) => (marked ? marked.parse(s) : ''),
+    autoRender: window.renderMathInElement,
+    transformHtml: (html) => html
+      .replaceAll('@@FIGURE@@', '<span class="media-token">🖼 图 · 点本页「看原版」查看</span>')
+      .replaceAll('@@TABLE@@', '<span class="media-token">▤ 表 · 点本页「看原版」查看</span>'),
+  });
   page.body.classList.remove('loading');
-  page.body.innerHTML = html;
-  // 流式期间也渲染公式：KaTeX auto-render 只处理成对定界符，末尾未闭合的
-  // $ 区域自然保持原文直到闭合，不会闪烁。小屏一次只看一两段，公式即时
-  // 成型比桌面更重要。
-  if (window.renderMathInElement) {
-    try {
-      window.renderMathInElement(page.body, {
-        delimiters: [
-          { left: '$$', right: '$$', display: true },
-          { left: '$', right: '$', display: false },
-          { left: '\\(', right: '\\)', display: false },
-        ],
-        throwOnError: false,
-      });
-    } catch { /* 单个坏公式不阻塞整页 */ }
-  }
+  void streaming; // 流式与最终渲染共用同一管线；KaTeX 只处理成对定界符，不闪烁
 }
 
 // ---------------------------------------------------------------------------
@@ -479,8 +470,21 @@ async function renderPageShot(page) {
   page.shotWrap.hidden = false;
 }
 function togglePageShot(page) {
-  if (!page.shotWrap.hidden && page.shotWrap.firstChild) { page.shotWrap.hidden = true; return; }
-  renderPageShot(page).catch((e) => showToast('原版页渲染失败：' + (e?.message || e), true));
+  const btn = page.card.querySelector('.shot-toggle');
+  if (!page.shotWrap.hidden && page.shotWrap.firstChild) {
+    page.shotWrap.hidden = true;
+    if (btn) btn.textContent = '看原版';
+    return;
+  }
+  if (btn) btn.textContent = '加载原版…';
+  renderPageShot(page).then(() => {
+    if (btn) btn.textContent = '收起原版';
+    // 原版图滚入视野：用户点了按钮，必须立刻看到结果。
+    page.shotWrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }).catch((e) => {
+    if (btn) btn.textContent = '看原版';
+    showToast('原版页渲染失败：' + (e?.message || e), true);
+  });
 }
 
 // ---------------------------------------------------------------------------

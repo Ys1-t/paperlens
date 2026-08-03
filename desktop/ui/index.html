@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>PaperLens Desktop</title>
+  <link rel="stylesheet" href="../../src/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <div id="shell">
+    <!-- 左栏：论文 -->
+    <aside id="paper-pane">
+      <div class="pane-head">
+        <span class="pane-title" id="paper-title">论文</span>
+        <label class="ghost-btn" title="打开 PDF 论文">
+          打开 PDF<input id="pdf-input" type="file" accept="application/pdf,.pdf" hidden />
+        </label>
+      </div>
+      <div id="paper-empty" class="paper-empty">
+        <div class="paper-empty-art">📄</div>
+        <p>打开一篇 PDF<br/>助手即可「结合本论文」回答</p>
+        <p class="paper-empty-sub">拖拽文件到此处也可以</p>
+      </div>
+      <div id="paper-pages" class="paper-pages" hidden></div>
+    </aside>
+    <div id="pane-divider"></div>
+
+    <!-- 右栏：对话 -->
+    <main id="chat-pane">
+      <header id="topbar">
+        <div class="brand">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a3 3 0 0 1 3 3v14a3 3 0 0 0-3-3H4V5.5Zm16 0A2.5 2.5 0 0 0 17.5 3H14v17a3 3 0 0 1 3-3h3V5.5Z"/></svg>
+          <span>PaperLens <em>Desktop</em></span>
+        </div>
+        <span id="model-badge" class="model-badge" title="当前模型">未配置</span>
+        <span class="spacer"></span>
+        <button id="btn-reset" class="ghost-btn" type="button">新会话</button>
+        <button id="btn-settings" class="ghost-btn" type="button">设置</button>
+      </header>
+
+      <div id="log">
+        <!-- 欢迎页 -->
+        <section id="welcome">
+          <h1>今天读点什么？</h1>
+          <p class="welcome-sub">联网科研智能体 — 查文献查到原文，而不是转述</p>
+          <div id="starters" class="starters">
+            <button type="button" data-q="搜一下 multi-objective optimization with deep learning 方向最新的论文，挑三篇最值得读的">🔭 找方向上最新的论文</button>
+            <button type="button" data-q="Deep reinforcement learning for multiobjective optimization 这篇论文在讲什么？给出权威来源">📖 查一篇具体文献</button>
+            <button type="button" data-q="用白话解释 Pareto 最优和 Pareto 前沿，并给出一篇经典综述来源">💡 概念溯源</button>
+          </div>
+        </section>
+      </div>
+
+      <form id="ask-form">
+        <div class="composer">
+          <textarea id="ask-input" rows="1" placeholder="问点什么…（Enter 发送，Shift+Enter 换行）"></textarea>
+          <button id="ask-btn" type="submit" title="发送">
+            <svg viewBox="0 0 24 24"><path d="M3.4 20.4 21 12 3.4 3.6l-.01 6.53L14 12 3.39 13.87z"/></svg>
+          </button>
+        </div>
+        <p class="composer-hint" id="composer-hint"></p>
+      </form>
+    </main>
+  </div>
+
+  <dialog id="settings">
+    <h3>模型设置</h3>
+    <p class="dlg-sub">OpenAI 兼容端点（中转站 / DeepSeek / 官方均可）。模型需支持 function calling。</p>
+    <label>Base URL<input id="cfg-baseurl" placeholder="https://your-proxy.example/v1" spellcheck="false" /></label>
+    <label>API Key<input id="cfg-apikey" type="password" placeholder="sk-…" spellcheck="false" /></label>
+    <label>模型<input id="cfg-model" placeholder="deepseek-chat / gpt-4o-mini / gemini-2.5-flash" spellcheck="false" /></label>
+    <menu>
+      <button id="cfg-cancel" type="button" class="ghost-btn">取消</button>
+      <button id="cfg-save" type="button" class="primary-btn">保存</button>
+    </menu>
+  </dialog>
+
+  <script src="../../src/vendor/pdf.min.js"></script>
+  <script src="../../src/vendor/marked.min.js"></script>
+  <script src="../../src/vendor/katex/katex.min.js"></script>
+  <script src="../../src/vendor/katex/auto-render.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
