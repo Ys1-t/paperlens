@@ -1,0 +1,127 @@
+:root {
+  --accent: #6c4bd6;
+  --accent-soft: #efeaff;
+  --border: #e2e5ea;
+  --text: #1f2430;
+  --muted: #7a828e;
+  --ok: #2b9d5b;
+  --err: #d64545;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #f5f6f8; color: var(--text);
+  font-family: -apple-system, "Segoe UI", "Microsoft YaHei", Roboto, Arial, sans-serif;
+}
+.wrap { max-width: 680px; margin: 0 auto; padding: 32px 20px 80px; }
+h1 { font-size: 22px; margin: 0 0 4px; }
+.sub { color: var(--muted); margin: 0 0 22px; font-size: 14px; }
+.card {
+  background: #fff; border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px 22px; margin-bottom: 18px;
+}
+.card h2 { font-size: 15px; margin: 0 0 16px; color: var(--accent); }
+.profile-panel {
+  margin: -2px 0 18px; padding: 14px; border: 1px solid #dcd4fa; border-radius: 10px;
+  background: linear-gradient(135deg, #fbfaff 0%, #f6f3ff 100%);
+}
+.profile-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.profile-title { font-size: 13px; font-weight: 700; color: var(--accent); }
+.profile-badge {
+  display: inline-flex; align-items: center; min-height: 23px; padding: 3px 8px; border-radius: 999px;
+  background: #fff; border: 1px solid #d9cffb; color: var(--accent); font-size: 11px; font-weight: 600;
+}
+.profile-badge.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.profile-badge.draft { background: #fff6dc; border-color: #efd58b; color: #8a6511; }
+.profile-select-field { margin-bottom: 10px; }
+.profile-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.profile-actions button:disabled { opacity: .48; cursor: not-allowed; filter: none; }
+.profile-result { min-height: 18px; margin: 8px 0 -4px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field > span { font-size: 13px; color: var(--muted); }
+.field.inline { flex-direction: row; align-items: center; justify-content: space-between; }
+.field.inline > span { flex: 1; }
+.field.inline input { width: 120px; }
+input[type=text], input[type=password], input[type=number], select, textarea {
+  border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-size: 14px;
+  font-family: inherit; background: #fff; color: var(--text); width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.key-row { display: flex; gap: 8px; }
+.hint { font-size: 12.5px; color: var(--muted); margin: -6px 0 14px; line-height: 1.5; }
+.steps-hint {
+  margin: 0 0 14px; padding-left: 1.25em;
+  font-size: 12.5px; color: var(--muted); line-height: 1.65;
+}
+.steps-hint li { margin: 0.25em 0; }
+#section-chat-assistant {
+  border-color: #d9cffb;
+  background: linear-gradient(180deg, #fbfaff 0%, #fff 48px);
+}
+#section-chat-assistant h2 { color: #4b36b0; }
+.local-warning {
+  margin: -6px 0 14px; padding: 9px 11px; border-radius: 8px; background: #fff8e7;
+  border: 1px solid #f0dfae; color: #6f571b; font-size: 12px; line-height: 1.55;
+}
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 12px; cursor: pointer; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; }
+.row { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.adv { margin-top: 8px; }
+.adv summary { cursor: pointer; font-size: 13px; color: var(--accent); }
+.adv textarea { margin-top: 10px; }
+
+button {
+  border: 1px solid var(--border); background: #fff; color: var(--text); border-radius: 8px;
+  padding: 8px 14px; font-size: 14px; cursor: pointer; font-family: inherit;
+}
+button:hover { background: var(--accent-soft); }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button.primary:hover { filter: brightness(1.06); }
+button.big { padding: 11px 26px; font-size: 15px; font-weight: 600; }
+button.mini { padding: 8px 10px; font-size: 12px; white-space: nowrap; }
+button.ghost { color: var(--err); border-color: #f0d0d0; }
+button.ghost:hover { background: #fdeeee; }
+
+.footer { display: flex; align-items: center; gap: 14px; position: sticky; bottom: 0; padding-top: 8px; }
+.test-result { font-size: 13px; }
+.test-result.ok { color: var(--ok); }
+.test-result.err { color: var(--err); }
+.test-result.busy { color: var(--muted); }
+
+/* 原始自检 */
+.selftest { margin-top: 14px; border-top: 1px dashed var(--border); padding-top: 14px; }
+button.ghost-accent { color: var(--accent); border-color: #d9cffb; }
+button.ghost-accent:hover { background: var(--accent-soft); }
+.inline-hint { margin: 0; font-size: 12px; color: var(--muted); flex: 1; line-height: 1.5; }
+.selftest-out {
+  margin-top: 12px; background: #1f2430; color: #e6e8ee; border-radius: 8px; padding: 12px 14px;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 12px; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto;
+}
+.diag-report {
+  margin-top: 10px; width: 100%; min-height: 120px; font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px; background: #f7f8fa; color: var(--text);
+}
+
+.glossary-add { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.glossary-add input { flex: 1 1 180px; }
+.glossary-list {
+  list-style: none; margin: 8px 0 0; padding: 0;
+  max-height: 260px; overflow: auto;
+}
+.glossary-list li {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 6px 2px; border-bottom: 1px dashed var(--border); font-size: 13px;
+}
+.glossary-item-label { flex: 1; word-break: break-word; }
+.glossary-del { flex: 0 0 auto; }
+.glossary-empty { color: var(--muted); border-bottom: none !important; }
+
+.usage-line { font-size: 13px; }
+.usage-price-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 10px 0; }
+.usage-price { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.usage-price input { width: 90px; }
+.usage-cost { font-size: 13px; }
+
+@media (max-width: 520px) {
+  .profile-actions button { flex: 1 1 calc(33.333% - 7px); }
+}

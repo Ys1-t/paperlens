@@ -1,0 +1,34 @@
+# 便携运行时与依赖
+.tools/
+server/.venv/
+
+# Python 缓存与编译产物
+server/__pycache__/
+__pycache__/
+*.pyc
+
+# 运行时输出与日志
+output/
+server/_requests.log
+server/.layout-ai-enabled
+server/_qa/
+server/_h.html
+server/_*.png
+
+# 打包产物与依赖
+dist/
+node_modules/
+.pytest_cache/
+
+# iOS 壳构建产物（mobile/ 只入库配置与脚本）
+mobile/www/
+mobile/ios/
+mobile/node_modules/
+mobile/package-lock.json
+
+# 工具痕迹
+.agents/
+.codex/
+.playwright-cli/
+desktop/agent.config.json
+desktop/node_modules/

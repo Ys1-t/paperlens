@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PaperLens 异常诊断</title>
+  <style>
+    :root { color-scheme: light; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
+    body { margin: 0; background: #f6f7fb; color: #202430; }
+    main { max-width: 980px; margin: 32px auto; padding: 0 20px; }
+    .card { padding: 22px; border: 1px solid #dfe3ea; border-radius: 14px; background: #fff; box-shadow: 0 8px 28px rgba(31, 36, 48, .06); }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p { margin: 0 0 16px; color: #657080; }
+    textarea { width: 100%; min-height: 480px; resize: vertical; padding: 14px; border: 1px solid #cfd5df; border-radius: 10px; background: #fbfcfe; font: 12px/1.55 Consolas, monospace; }
+    .actions { display: flex; gap: 10px; margin-top: 14px; }
+    button { padding: 9px 15px; border: 1px solid #cfd5df; border-radius: 9px; background: #fff; cursor: pointer; }
+    button.primary { border-color: #6c4bd6; background: #6c4bd6; color: #fff; }
+    #status { min-height: 20px; margin-top: 10px; color: #526071; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>PaperLens 异常诊断</h1>
+      <p>记录只保存在本机，API Key 和 URL 凭据会自动脱敏。</p>
+      <textarea id="diagnostic-report" readonly aria-label="异常诊断报告"></textarea>
+      <div class="actions">
+        <button id="copy-diagnostics" class="primary">复制诊断</button>
+        <button id="clear-diagnostics">清空记录</button>
+        <button id="refresh-diagnostics">刷新</button>
+      </div>
+      <div id="status" aria-live="polite"></div>
+    </section>
+  </main>
+  <script type="module" src="diagnostics.js"></script>
+</body>
+</html>

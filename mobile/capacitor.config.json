@@ -1,0 +1,12 @@
+{
+  "appId": "com.ys1t.paperlens",
+  "appName": "PaperLens",
+  "webDir": "www",
+  "server": {
+    "iosScheme": "https",
+    "hostname": "localhost"
+  },
+  "ios": {
+    "contentInset": "automatic"
+  }
+}

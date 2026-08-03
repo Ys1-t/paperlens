@@ -1,0 +1,16 @@
+{
+  "name": "paperlens-mobile",
+  "private": true,
+  "type": "module",
+  "description": "PaperLens iOS shell (Capacitor). Wraps the PWA in app/ + core libs in src/lib — no extension files are modified.",
+  "scripts": {
+    "build:www": "node scripts/build-www.mjs"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}
