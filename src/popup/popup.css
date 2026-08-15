@@ -1,0 +1,96 @@
+:root {
+  --accent: #6c4bd6;
+  --accent-soft: #efeaff;
+  --border: #e2e5ea;
+  --text: #1f2430;
+  --muted: #7a828e;
+}
+* { box-sizing: border-box; }
+/*
+ * 弹窗与侧栏：内容必须吃满可用宽度。
+ * 以前 .pop { width:300px } 在宽侧栏里会在右侧留一大片空白（用户截图）。
+ */
+html, body {
+  margin: 0;
+  width: 100%;
+  min-width: 300px;
+  /* 不设 max-width，侧栏拉宽时内容跟着铺满 */
+  font-family: -apple-system, "Segoe UI", "Microsoft YaHei", Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: #fff;
+}
+.pop {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 12px 14px 16px;
+  box-sizing: border-box;
+}
+/* 主按钮/卡片统一全宽，避免「内容偏左、右边空」 */
+.pop > * { max-width: 100%; }
+.provider-card, .big-btn, .url-row, .recent-card, .demo-link, .diagnostics-btn, .info {
+  width: 100%;
+  box-sizing: border-box;
+}
+.head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.brand { font-weight: 700; color: var(--accent); }
+.link { border: none; background: none; cursor: pointer; font-size: 16px; color: var(--muted); }
+.link:hover { color: var(--accent); }
+
+.provider-card {
+  display: grid; grid-template-columns: 1fr auto; gap: 5px 8px; align-items: center;
+  margin-bottom: 12px; padding: 10px; border: 1px solid var(--border); border-radius: 10px;
+  background: #faf9ff;
+}
+.provider-card label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.provider-card select {
+  grid-column: 1 / -1; width: 100%; min-width: 0; padding: 7px 9px;
+  border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text);
+}
+.model-status { font-size: 11px; color: var(--muted); text-align: right; }
+.model-status.missing-key { color: #c47d1a; }
+.provider-card .status { grid-column: 1 / -1; margin: 0; }
+.provider-card .status a { color: var(--accent); }
+.switch-message { grid-column: 1 / -1; min-height: 14px; margin: 0; font-size: 11px; color: var(--muted); }
+.switch-message.error { color: #b42318; }
+
+.big-btn {
+  display: block; width: 100%; text-align: center; background: var(--accent); color: #fff;
+  border: none; border-radius: 9px; padding: 11px; font-size: 14px; font-weight: 600; cursor: pointer;
+  margin-bottom: 8px;
+}
+.big-btn:hover { filter: brightness(1.06); }
+.big-btn.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); font-weight: 500; }
+.big-btn.secondary:hover { background: var(--accent-soft); }
+.info { font-size: 12px; color: var(--muted); margin-bottom: 8px; word-break: break-all; min-height: 14px; }
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+.url-row { display: flex; gap: 6px; margin-top: 8px; }
+.url-row input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+.url-row button { border: 1px solid var(--border); background: #fff; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
+.url-row button:hover { background: var(--accent-soft); }
+.demo-link {
+  width: 100%; margin-top: 8px; padding: 6px 2px; border: 0; background: transparent;
+  color: var(--muted); font-size: 12px; cursor: pointer; text-align: left;
+}
+.demo-link:hover { color: var(--accent); text-decoration: underline; }
+.recent-card { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+.recent-head { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.recent-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.recent-item {
+  display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
+  border: 1px solid transparent; background: transparent; border-radius: 8px;
+  padding: 6px 8px; font-size: 12px; color: var(--text); cursor: pointer;
+}
+.recent-item:hover { background: var(--accent-soft); border-color: #d9d0f7; color: var(--accent); }
+.recent-local-tag {
+  flex: 0 0 auto; margin-left: auto; font-size: 10px; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 6px; padding: 1px 5px;
+}
+.diagnostics-btn {
+  width: 100%; margin-top: 10px; padding: 7px 10px; border: 0; background: transparent;
+  color: var(--muted); font-size: 12px; cursor: pointer;
+}
+.diagnostics-btn:hover { color: var(--accent); text-decoration: underline; }
+.status { font-size: 12px; min-height: 16px; }
+.status.warn { color: #c47d1a; }
+.status.ok { color: var(--muted); }

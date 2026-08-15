@@ -1,0 +1,15 @@
+{
+  "name": "PaperLens 论文双语阅读",
+  "short_name": "PaperLens",
+  "description": "论文 PDF 双语对照阅读：视觉翻译、KaTeX 公式、本地缓存。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f8fa",
+  "theme_color": "#1a7f5a",
+  "icons": [
+    { "src": "../icons/icon128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "../icons/icon48.png", "sizes": "48x48", "type": "image/png" }
+  ]
+}

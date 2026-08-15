@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>PaperLens Desktop</title>
+  <link rel="stylesheet" href="../../src/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <div id="shell">
+    <!-- 左侧导航栏：工作台形态 -->
+    <nav id="nav-rail">
+      <div class="nav-brand" title="PaperLens Desktop">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a3 3 0 0 1 3 3v14a3 3 0 0 0-3-3H4V5.5Zm16 0A2.5 2.5 0 0 0 17.5 3H14v17a3 3 0 0 1 3-3h3V5.5Z"/></svg>
+      </div>
+      <button class="nav-item active" data-view="home" title="工作台首页">
+        <span class="nav-ico">◈</span><span class="nav-label">首页</span>
+      </button>
+      <button class="nav-item" data-view="reader" title="双栏对照阅读">
+        <span class="nav-ico">❐</span><span class="nav-label">阅读</span>
+      </button>
+      <button class="nav-item" data-view="library" title="我的论文文库">
+        <span class="nav-ico">☰</span><span class="nav-label">文库</span>
+      </button>
+      <button class="nav-item" data-view="radar" title="前沿论文雷达">
+        <span class="nav-ico">◎</span><span class="nav-label">雷达</span>
+      </button>
+      <button class="nav-item" data-view="submit" title="投稿助手">
+        <span class="nav-ico">✈</span><span class="nav-label">投稿</span>
+      </button>
+      <button class="nav-item" data-view="kb" title="领域知识库（Obsidian）">
+        <span class="nav-ico">✦</span><span class="nav-label">知识库</span>
+      </button>
+      <button class="nav-item" data-view="write" title="写作草稿">
+        <span class="nav-ico">✎</span><span class="nav-label">写作</span>
+      </button>
+      <button class="nav-item" data-view="stats" title="阅读统计">
+        <span class="nav-ico">▤</span><span class="nav-label">统计</span>
+      </button>
+      <div class="nav-spacer"></div>
+      <button id="btn-theme" class="nav-item nav-mini" title="明暗主题">◐</button>
+      <button id="btn-settings" class="nav-item nav-mini" title="设置">⚙</button>
+    </nav>
+
+    <div id="main-col">
+      <!-- 顶栏：全局 -->
+      <header id="topbar">
+        <span id="doc-title" class="doc-title" title="">PaperLens 科研工作台</span>
+        <span class="spacer"></span>
+        <button id="btn-open-pdf" class="ghost-btn" type="button" title="打开 PDF 论文（Ctrl+O）">打开 PDF</button>
+        <button id="btn-todos" class="ghost-btn" type="button" title="课题待办">待办 <span id="todos-count" class="count-pill" hidden></span></button>
+        <button id="btn-notes" class="ghost-btn" type="button">笔记 <span id="notes-count" class="count-pill" hidden></span></button>
+        <button id="btn-chat" class="ghost-btn primary-ghost" type="button" title="科研 Agent（A）">Agent</button>
+      </header>
+
+      <div id="views">
+        <!-- ============ 首页 ============ -->
+        <section id="view-home" class="view active">
+          <div class="home-wrap">
+            <div class="home-hero">
+              <h1 id="home-greeting">下午好</h1>
+              <p class="home-sub">研究生的书桌 — 读论文、追前沿、管投稿、建知识库</p>
+              <div class="home-actions">
+                <button class="hero-btn" id="home-open-pdf">📄 打开论文</button>
+                <button class="hero-btn" data-goto="radar">◎ 看看前沿</button>
+                <button class="hero-btn" id="home-ask-agent">✧ 问 Agent</button>
+              </div>
+              <p class="home-paste-hint">💡 直接粘贴 arXiv 链接 / ID（Ctrl+V），立即下载并打开阅读</p>
+            </div>
+            <div class="home-grid">
+              <div class="home-card" id="home-continue">
+                <h3>继续阅读</h3>
+                <div class="hc-body" id="home-recent-list"><p class="hc-empty">还没有阅读记录</p></div>
+              </div>
+              <div class="home-card" id="home-reading">
+                <h3>待读清单 <button class="hc-more" data-goto="radar">去雷达找 →</button></h3>
+                <div class="hc-body" id="home-reading-list"><p class="hc-empty">暂无待读论文</p></div>
+              </div>
+              <div class="home-card" id="home-ddl">
+                <h3>投稿倒计时 <button class="hc-more" data-goto="submit">管理 →</button></h3>
+                <div class="hc-body" id="home-ddl-list"><p class="hc-empty">未设置投稿目标</p></div>
+              </div>
+              <div class="home-card" id="home-stats">
+                <h3>本周研究 <button class="hc-more" data-goto="stats">详情 →</button></h3>
+                <div class="hc-body" id="home-stats-body"><p class="hc-empty">开始阅读后这里会有数据</p></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 阅读器 ============ -->
+        <section id="view-reader" class="view">
+          <!-- 多论文标签 -->
+          <div id="reader-tabs" class="reader-tabs" hidden></div>
+          <!-- 阅读工具条 -->
+          <div id="reader-toolbar" hidden>
+            <button id="btn-translate-all" class="tool-btn" type="button" title="从当前页开始翻译全部未译页">译全篇</button>
+            <button id="btn-auto-translate" class="tool-btn toggle" type="button" title="滚到哪页译哪页">自动译</button>
+            <span class="tool-sep"></span>
+            <button id="btn-scroll-link" class="tool-btn toggle on" type="button" title="双栏滚动联动（按住 Alt 可临时独立）">联动</button>
+            <button id="btn-bilingual" class="tool-btn toggle" type="button" title="译文下方附原文文本">对照</button>
+            <span class="tool-sep"></span>
+            <button id="btn-zoom-out" class="tool-btn" type="button" title="缩小原文">−</button>
+            <span id="zoom-label" class="zoom-label" title="点击恢复适宽">适宽</span>
+            <button id="btn-zoom-in" class="tool-btn" type="button" title="放大原文">＋</button>
+            <span class="tool-sep"></span>
+            <button id="btn-outline" class="tool-btn toggle" type="button" title="目录（O）">目录</button>
+            <button id="btn-page-rail" class="tool-btn toggle on" type="button" title="本页洞察：主张/符号/数值（I）">洞察</button>
+            <button id="btn-highlights" class="tool-btn" type="button" title="本篇的持久高亮列表">高亮</button>
+            <button id="btn-snip" class="tool-btn" type="button" title="框选 PDF 区域问 AI（S）">框选</button>
+            <button id="btn-search" class="tool-btn" type="button" title="搜索译文（Ctrl+F）">搜索</button>
+            <button id="btn-export-md" class="tool-btn" type="button" title="导出译文 Markdown">导出</button>
+            <span class="spacer"></span>
+            <span id="reader-hint" class="reader-hint">双击任意一栏可跳到另一栏对应位置 · 选中原文可划词</span>
+          </div>
+          <div id="workspace">
+            <nav id="outline-rail" class="outline-rail" hidden>
+              <div class="rail-head">目录</div>
+              <ol id="outline-list" class="outline-list"></ol>
+            </nav>
+            <section id="pdf-pane" class="read-pane">
+              <div class="pane-label">原文</div>
+              <div id="paper-empty" class="paper-empty">
+                <div class="paper-empty-art">
+                  <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a3 3 0 0 1 3 3v14a3 3 0 0 0-3-3H4V5.5Zm16 0A2.5 2.5 0 0 0 17.5 3H14v17a3 3 0 0 1 3-3h3V5.5Z"/></svg>
+                </div>
+                <h2>打开一篇论文开始</h2>
+                <p class="paper-empty-sub">拖拽 PDF 到此处 · 或粘贴 arXiv 链接 · 或从文库/雷达打开</p>
+                <div id="recent-list" class="recent-list"></div>
+              </div>
+              <div id="pdf-pages" class="scroll-pages" hidden></div>
+            </section>
+            <div id="pane-divider" title="拖拽调整分栏"></div>
+            <section id="trans-pane" class="read-pane">
+              <div class="pane-label">译文</div>
+              <div id="trans-empty" class="trans-empty">
+                <p>打开 PDF 后，右侧按页显示译文</p>
+                <p class="hint-line"><kbd>J</kbd>/<kbd>K</kbd> 翻页 · <kbd>O</kbd> 目录 · <kbd>I</kbd> 洞察 · <kbd>S</kbd> 框选 · <kbd>A</kbd> Agent</p>
+              </div>
+              <div id="trans-pages" class="scroll-pages" hidden></div>
+            </section>
+            <!-- 本页洞察侧栏：主张 / 符号 / 数值（本地即时） -->
+            <aside id="page-rail" class="page-rail">
+              <div class="pr-head">
+                <strong>本页洞察</strong>
+                <span id="pr-page-label" class="pr-page">—</span>
+              </div>
+              <div id="pr-sections" class="pr-chips"></div>
+              <h5>疑似主张</h5>
+              <div id="pr-claims" class="pr-list"><p class="pr-empty">打开论文并滚动到有内容的页</p></div>
+              <h5>符号 / 术语</h5>
+              <div id="pr-symbols" class="pr-chips"></div>
+              <h5>关键数值</h5>
+              <div id="pr-numbers" class="pr-list"></div>
+              <div class="pr-actions">
+                <button type="button" id="pr-agent-claims" class="ghost-btn" title="用 Agent 精炼全文主张地图">✧ 主张地图</button>
+                <button type="button" id="pr-agent-coach" class="ghost-btn" title="带读教练">✧ 带读</button>
+                <button type="button" id="pr-to-bullets" class="ghost-btn" title="把主张收成投稿 contribution bullets">→ 贡献条</button>
+              </div>
+            </aside>
+          </div>
+          <!-- 译文搜索条 -->
+          <div id="search-bar" hidden>
+            <input id="search-input" placeholder="搜索译文…（Enter 下一处，Shift+Enter 上一处）" />
+            <span id="search-count" class="search-count"></span>
+            <button id="search-prev" class="tool-btn" title="上一处">↑</button>
+            <button id="search-next" class="tool-btn" title="下一处">↓</button>
+            <button id="search-close" class="icon-x" title="关闭">✕</button>
+          </div>
+        </section>
+
+        <!-- ============ 文库 ============ -->
+        <section id="view-library" class="view">
+          <div class="page-wrap">
+            <header class="page-head">
+              <h2>论文文库</h2>
+              <p>读过的每一篇都在这里 — 标签、星标、进度、一键重开</p>
+            </header>
+            <div class="lib-controls">
+              <input id="lib-search" class="text-input" placeholder="搜标题 / 标签 / 摘要…" />
+              <button id="lib-star-filter" class="tool-btn toggle" title="只看星标">★ 星标</button>
+              <button id="lib-import" class="tool-btn" title="选择文件夹，批量收录里面的 PDF">批量导入</button>
+              <div id="lib-tags" class="lib-tags"></div>
+            </div>
+            <div id="lib-grid" class="lib-grid"></div>
+          </div>
+        </section>
+
+        <!-- ============ 前沿雷达 ============ -->
+        <section id="view-radar" class="view">
+          <div class="page-wrap">
+            <header class="page-head">
+              <h2>前沿论文雷达</h2>
+              <p>按你的兴趣扫描 arXiv 最新提交 — 相关度排序，一键用 PaperLens 打开</p>
+              <div class="page-head-actions">
+                <button id="radar-refresh" class="ghost-btn">↻ 刷新</button>
+                <button id="radar-digest" class="ghost-btn" title="把今日速报写入 Obsidian vault">日报入库</button>
+                <button id="radar-setup-toggle" class="ghost-btn">兴趣设置</button>
+              </div>
+            </header>
+            <div id="radar-setup" class="radar-setup" hidden>
+              <h4>arXiv 分类（可多选）</h4>
+              <div id="radar-cats" class="radar-cats"></div>
+              <h4>关键词（回车添加；命中标题/摘要加分）</h4>
+              <div id="radar-keywords" class="radar-keywords"></div>
+              <input id="radar-kw-input" class="text-input" placeholder="例如 multi-objective optimization" />
+              <div class="radar-setup-actions">
+                <button id="radar-save" class="primary-btn">保存并刷新</button>
+              </div>
+            </div>
+            <div id="compare-queue-bar" class="compare-queue-bar" hidden>
+              <strong>对照队列</strong>
+              <span id="compare-queue-count" class="cq-count">0</span>
+              <button type="button" id="compare-queue-run" class="ghost-btn primary-ghost" disabled>✧ 对照当前论文</button>
+              <button type="button" id="compare-queue-clear" class="ghost-btn">清空</button>
+              <div id="compare-queue-chips" class="cq-chips"></div>
+            </div>
+            <div id="radar-list" class="radar-list"><p class="hc-empty">点「兴趣设置」选好方向，然后刷新</p></div>
+          </div>
+        </section>
+
+        <!-- ============ 投稿助手 ============ -->
+        <section id="view-submit" class="view">
+          <div class="page-wrap">
+            <header class="page-head">
+              <h2>投稿助手</h2>
+              <p>DDL · 检查清单 · 从在读论文生成 contribution bullets</p>
+              <div class="page-head-actions">
+                <button id="venue-ask-agent" class="ghost-btn">✧ 让 Agent 建议投哪</button>
+                <button id="venue-bullets" class="ghost-btn" title="从当前论文主张生成贡献条目">✧ 生成贡献条</button>
+              </div>
+            </header>
+            <div id="contrib-panel" class="contrib-panel" hidden>
+              <h4>Contribution bullets <button type="button" id="contrib-copy" class="ghost-btn">复制</button></h4>
+              <ol id="contrib-list" class="contrib-list"></ol>
+              <p class="mini-note">本地规则草稿 — 可再让 Agent 润色成英文投稿口吻</p>
+            </div>
+            <div class="submit-cols">
+              <div class="submit-col">
+                <h4>目标会议 / 期刊</h4>
+                <form id="venue-form" class="venue-form">
+                  <input id="venue-abbr" class="text-input" placeholder="缩写，如 NeurIPS" list="venue-presets" required />
+                  <datalist id="venue-presets"></datalist>
+                  <input id="venue-deadline" class="text-input" type="date" title="截稿日期（AoE）" />
+                  <input id="venue-url" class="text-input" placeholder="官网 / CFP 链接（可选）" />
+                  <button type="submit" class="primary-btn">添加</button>
+                </form>
+                <p class="mini-note">⚠ 每年截稿日期不同，请以官网为准 — 预设只帮你少打字。</p>
+                <div id="venue-board" class="venue-board"></div>
+              </div>
+              <div class="submit-col">
+                <h4>投稿前检查清单</h4>
+                <div id="submit-checklist" class="submit-checklist"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 知识库 ============ -->
+        <section id="view-kb" class="view">
+          <div class="page-wrap">
+            <header class="page-head">
+              <h2>领域知识库</h2>
+              <p>连接 Obsidian vault — 全文检索你的笔记积累，Agent 也能读</p>
+              <div class="page-head-actions">
+                <button id="kb-pick" class="ghost-btn">选择 vault 文件夹</button>
+                <button id="kb-weave" class="ghost-btn" title="让 Agent 把当前论文与知识库串联">✧ 与当前论文串联</button>
+              </div>
+            </header>
+            <div id="kb-overview" class="kb-overview"></div>
+            <input id="kb-search-input" class="text-input" placeholder="检索知识库…（回车）" />
+            <div id="kb-results" class="kb-results"></div>
+            <h4 class="stats-h4">术语表</h4>
+            <p class="mini-note">划词翻译后可「锁定术语」；此处可查看、增补、删除。锁定译法会注入后续整页与划词翻译。</p>
+            <form id="glossary-form" class="glossary-form">
+              <input id="glossary-term" class="text-input" placeholder="英文术语 / 短语" maxlength="80" required />
+              <input id="glossary-translation" class="text-input" placeholder="中文锁定译法" maxlength="80" required />
+              <button type="submit" class="primary-btn">添加 / 更新</button>
+            </form>
+            <div id="glossary-list" class="glossary-list"></div>
+          </div>
+        </section>
+
+        <!-- ============ 写作 ============ -->
+        <section id="view-write" class="view">
+          <div class="page-wrap write-wrap">
+            <header class="page-head">
+              <h2>写作工坊</h2>
+              <p>Related Work / 组会稿 / 润色 — 草稿本地保存，可一键让 Agent 生成或润色</p>
+              <div class="page-head-actions">
+                <button id="write-new" class="ghost-btn" type="button">新建草稿</button>
+                <button id="write-gen-rw" class="ghost-btn" type="button" title="基于当前论文生成 Related Work">✧ 生成 Related Work</button>
+                <button id="write-polish" class="ghost-btn" type="button">✧ 润色当前</button>
+                <button id="write-save" class="primary-btn" type="button">保存</button>
+              </div>
+            </header>
+            <div class="write-layout">
+              <aside class="write-sidebar">
+                <h4>我的草稿</h4>
+                <div id="write-draft-list" class="write-draft-list"></div>
+              </aside>
+              <div class="write-main">
+                <input id="write-title" class="text-input write-title" placeholder="草稿标题" />
+                <select id="write-kind" class="text-input write-kind">
+                  <option value="general">通用</option>
+                  <option value="related-work">Related Work</option>
+                  <option value="meeting">组会讲稿</option>
+                  <option value="rebuttal">Rebuttal</option>
+                  <option value="polish">润色稿</option>
+                </select>
+                <textarea id="write-body" class="write-body" placeholder="在此写作… 或点上方让 Agent 生成初稿"></textarea>
+                <div id="write-diff" class="write-diff" hidden></div>
+                <p class="mini-note" id="write-meta">尚未保存</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 统计 ============ -->
+        <section id="view-stats" class="view">
+          <div class="page-wrap">
+            <header class="page-head">
+              <h2>阅读统计</h2>
+              <p>读了多少、译了多少、花了多少 — 心里有数</p>
+            </header>
+            <div id="stats-cards" class="stats-cards"></div>
+            <div class="stats-row">
+              <div class="stats-panel">
+                <h4 class="stats-h4">最近 12 周热力图</h4>
+                <div class="hm-legend">
+                  <span>少</span>
+                  <i class="hm-cell l0"></i><i class="hm-cell l1"></i><i class="hm-cell l2"></i><i class="hm-cell l3"></i><i class="hm-cell l4"></i>
+                  <span>多</span>
+                </div>
+                <div id="stats-heatmap" class="stats-heatmap"></div>
+              </div>
+              <div class="stats-panel">
+                <h4 class="stats-h4">本周 vs 上周</h4>
+                <div id="stats-compare" class="stats-compare"></div>
+                <h4 class="stats-h4">API 预算</h4>
+                <div class="stats-budget">
+                  <label>单价（元 / 百万 token）<input id="stats-price" class="text-input" type="number" min="0" step="0.1" placeholder="如 2.0" /></label>
+                  <div id="stats-cost" class="stats-cost"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- 状态栏 -->
+      <footer id="status-bar">
+        <span id="status-msg" class="status-msg"></span>
+        <span class="spacer"></span>
+        <span id="status-page" class="status-chip" hidden></span>
+        <span id="status-translated" class="status-chip" hidden></span>
+        <button id="model-badge" class="status-chip model-chip" title="当前模型 · 点击打开设置">未配置</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- 助手面板：停靠在右侧，和阅读双栏共存，不遮挡内容 -->
+  <aside id="chat-drawer" class="side-drawer" hidden>
+    <div id="chat-resize" class="chat-resize" title="拖拽调整 Agent 面板宽度"></div>
+    <header class="drawer-head">
+      <strong>科研 Agent</strong>
+      <button id="btn-cancel-chat" class="ghost-btn" type="button" hidden title="停止当前任务">停止</button>
+      <button id="btn-sessions" class="ghost-btn" type="button" title="历史会话">历史</button>
+      <button id="btn-reset" class="ghost-btn" type="button">新会话</button>
+      <button id="chat-close" class="icon-x" type="button" aria-label="关闭助手">✕</button>
+    </header>
+    <div id="session-list" class="session-list" hidden></div>
+    <div id="skill-bar" class="skill-bar" title="一键科研技能（Ctrl+K 搜索全部）"></div>
+    <div id="log">
+      <section id="welcome">
+        <h1>PaperLens Research Agent</h1>
+        <p class="welcome-sub">先取证再结论 · Timeline 可观察 · 连着你的论文/知识库/前沿雷达</p>
+        <div id="starters" class="starters">
+          <button type="button" data-skill="deep-read">📖 一键深读当前论文</button>
+          <button type="button" data-skill="frontier-digest" data-q="帮我看看我的方向今天有什么新论文">◎ 前沿日报</button>
+          <button type="button" data-skill="kb-weave" data-q="把当前论文和我的知识库串联起来">✦ 和我的知识库串联</button>
+          <button type="button" data-skill="meeting">🎤 生成组会讲稿</button>
+        </div>
+        <p class="kbd-hints">Ctrl+K 搜索全部技能 · 划词「问 AI」带引用 · 框选可发图提问</p>
+      </section>
+    </div>
+    <form id="ask-form">
+      <div id="composer-ctx" class="composer-ctx" hidden></div>
+      <div id="attach-strip" class="attach-strip" hidden>
+        <img id="attach-thumb" alt="附图" />
+        <span id="attach-label">已附框选图</span>
+        <button id="attach-remove" type="button" class="icon-x" title="移除附图">✕</button>
+      </div>
+      <div class="composer">
+        <textarea id="ask-input" rows="1" placeholder="下达科研目标…（Enter 发送，Shift+Enter 换行）"></textarea>
+        <button id="ask-btn" type="submit" title="发送">
+          <svg viewBox="0 0 24 24"><path d="M3.4 20.4 21 12 3.4 3.6l-.01 6.53L14 12 3.39 13.87z"/></svg>
+        </button>
+      </div>
+      <p class="composer-hint" id="composer-hint"></p>
+    </form>
+  </aside>
+
+  <dialog id="settings">
+    <h3>设置</h3>
+    <p class="dlg-sub">OpenAI 兼容端点。整页翻译需视觉模型；Research Agent 需支持 function calling。</p>
+    <label>Base URL<input id="cfg-baseurl" placeholder="https://your-proxy.example/v1" spellcheck="false" /></label>
+    <label>API Key<input id="cfg-apikey" type="password" placeholder="sk-…" spellcheck="false" /></label>
+    <label>模型<input id="cfg-model" placeholder="gpt-4o-mini / gemini-2.5-flash / …" spellcheck="false" /></label>
+    <label>目标语言
+      <select id="cfg-targetlang">
+        <option value="简体中文">简体中文</option>
+        <option value="繁體中文">繁體中文</option>
+        <option value="English">English</option>
+        <option value="日本語">日本語</option>
+      </select>
+    </label>
+    <label>Agent 模式
+      <select id="cfg-agent-mode">
+        <option value="copilot">副驾驶（写操作需确认 · 推荐）</option>
+        <option value="autopilot">自动驾驶（写操作自动执行）</option>
+      </select>
+    </label>
+    <hr class="dlg-sep" />
+    <h4 class="dlg-h4">研究档案（注入 Agent，让它懂你）</h4>
+    <label>领域<input id="cfg-field" placeholder="如 机器学习 / 计算机视觉" /></label>
+    <label>具体方向<input id="cfg-direction" placeholder="如 多目标优化 + 深度强化学习" /></label>
+    <label>当前目标<input id="cfg-goal" placeholder="如 2026 年底前投出一篇 NeurIPS" /></label>
+    <hr class="dlg-sep" />
+    <label>Overleaf 项目链接（可选）<input id="cfg-overleaf-url" placeholder="https://www.overleaf.com/project/…" spellcheck="false" /></label>
+    <label class="row">
+      <span>Obsidian 同步（笔记 + 知识库）</span>
+      <input id="cfg-obsidian-toggle" type="checkbox" />
+    </label>
+    <p class="dlg-sub" id="cfg-obsidian-status">未配置 — 收藏的笔记不会写入 vault</p>
+    <button id="cfg-obsidian-pick" type="button" class="ghost-btn" style="width:100%">选择 Obsidian vault 文件夹…</button>
+    <menu>
+      <button id="cfg-cancel" type="button" class="ghost-btn">取消</button>
+      <button id="cfg-save" type="button" class="primary-btn">保存</button>
+    </menu>
+  </dialog>
+
+  <!-- 技能面板（Ctrl+K） -->
+  <dialog id="skill-palette" class="palette">
+    <input id="palette-input" placeholder="搜索科研技能…" autocomplete="off" />
+    <div id="palette-list" class="palette-list"></div>
+  </dialog>
+
+  <!-- 快捷键帮助 -->
+  <dialog id="help-dialog">
+    <h3>快捷键</h3>
+    <table class="help-table">
+      <tr><td><kbd>J</kbd> / <kbd>K</kbd></td><td>下一页 / 上一页</td></tr>
+      <tr><td><kbd>T</kbd></td><td>翻译 / 重译当前页</td></tr>
+      <tr><td><kbd>O</kbd></td><td>目录侧栏</td></tr>
+      <tr><td><kbd>A</kbd></td><td>科研 Agent</td></tr>
+      <tr><td><kbd>S</kbd></td><td>框选提问（PDF 上拖矩形发给 Agent）</td></tr>
+      <tr><td><kbd>/</kbd></td><td>聚焦 Agent 输入框</td></tr>
+      <tr><td><kbd>Ctrl+K</kbd></td><td>技能面板</td></tr>
+      <tr><td><kbd>Ctrl+F</kbd></td><td>搜索译文</td></tr>
+      <tr><td><kbd>Ctrl+O</kbd></td><td>打开 PDF</td></tr>
+      <tr><td><kbd>Alt</kbd>（按住）</td><td>临时解除滚动联动</td></tr>
+      <tr><td>双击左/右栏</td><td>跳到另一栏对应位置</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>关闭浮层 / 抽屉</td></tr>
+    </table>
+    <menu><button class="primary-btn" id="help-close">知道了</button></menu>
+  </dialog>
+
+  <!-- 笔记抽屉 -->
+  <aside id="notes-drawer" hidden>
+    <header class="drawer-head">
+      <strong>科研笔记</strong>
+      <button id="notes-export" class="ghost-btn" type="button">导出 .md</button>
+      <button id="notes-close" class="icon-x" type="button" aria-label="关闭">✕</button>
+    </header>
+    <div id="notes-list" class="notes-list"></div>
+  </aside>
+
+  <!-- 高亮列表抽屉 -->
+  <aside id="highlights-drawer" hidden>
+    <header class="drawer-head">
+      <strong>本篇高亮</strong>
+      <button id="highlights-ask" class="ghost-btn" type="button" title="让 Agent 基于你的高亮做小结">✧ 串讲我的高亮</button>
+      <button id="highlights-close" class="icon-x" type="button" aria-label="关闭">✕</button>
+    </header>
+    <div id="highlights-list" class="notes-list"></div>
+  </aside>
+
+  <!-- 课题待办 / 记忆 -->
+  <aside id="todos-drawer" hidden>
+    <header class="drawer-head">
+      <strong>课题记忆</strong>
+      <button id="todos-close" class="icon-x" type="button" aria-label="关闭">✕</button>
+    </header>
+    <div class="todos-body">
+      <form id="todo-add-form" class="todo-add">
+        <input id="todo-input" placeholder="添加待办…" maxlength="300" />
+        <button type="submit" class="ghost-btn">添加</button>
+      </form>
+      <div id="todos-list" class="todos-list"></div>
+      <h4 class="mem-head">已记要点</h4>
+      <div id="memory-list" class="memory-list"></div>
+    </div>
+  </aside>
+
+  <script src="../../src/vendor/pdf.min.js"></script>
+  <script src="../../src/vendor/marked.min.js"></script>
+  <script src="../../src/vendor/katex/katex.min.js"></script>
+  <script src="../../src/vendor/katex/auto-render.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

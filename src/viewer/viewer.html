@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PaperLens 双语对照</title>
+  <link rel="stylesheet" href="../vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="viewer.css" />
+</head>
+<body>
+  <a class="skip-link" href="#panel-column">跳到译文</a>
+  <header id="toolbar">
+    <div class="tb-left">
+      <span class="brand" aria-label="PaperLens">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a3 3 0 0 1 3 3v14a3 3 0 0 0-3-3H4V5.5Zm16 0A2.5 2.5 0 0 0 17.5 3H14v17a3 3 0 0 1 3-3h3V5.5Z"/></svg>
+        <span class="brand-text">PaperLens</span>
+      </span>
+      <span id="app-version" class="app-version" aria-label="PaperLens 版本" title=""></span>
+      <span id="doc-title" class="doc-title"></span>
+    </div>
+    <div class="tb-center" role="toolbar" aria-label="阅读导航">
+      <div class="tb-cluster zoom-cluster">
+        <button id="zoom-out" class="icon-btn" title="缩小 PDF">－</button>
+        <span id="zoom-level">100%</span>
+        <button id="zoom-in" class="icon-btn" title="放大 PDF">＋</button>
+      </div>
+      <div class="tb-cluster page-jump" title="跳转到指定页（PageUp / PageDown 翻页）">
+        <button id="page-prev" class="icon-btn page-nav-btn" type="button" title="上一页" aria-label="上一页">‹</button>
+        <input id="page-jump-input" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="页码" />
+        <span id="page-jump-total" class="page-jump-total">/ 0</span>
+        <button id="page-next" class="icon-btn page-nav-btn" type="button" title="下一页" aria-label="下一页">›</button>
+      </div>
+      <button id="btn-scroll-link" class="text-btn scroll-link-btn is-linked" type="button"
+        title="滚动联动已开启：左右一起翻。译文更长时点这里可解除联动；按住 Alt 临时解除。Ctrl+Shift+L 切换。"
+        aria-pressed="true" aria-label="切换左右滚动联动">
+        <span class="scroll-link-label">联动</span>
+      </button>
+    </div>
+    <div class="tb-right">
+      <div class="provider-switcher" title="翻译使用的模型 Profile">
+        <select id="viewer-profile-select" aria-label="当前模型 Profile" title="切换新请求使用的模型 Profile" disabled></select>
+        <span id="viewer-model-status" class="viewer-model-status" role="status" aria-live="polite"></span>
+      </div>
+      <div id="reader-progress" class="reader-progress" role="status" aria-live="polite" title="翻译进度">
+        <span id="progress" class="progress"></span>
+        <span class="progress-track" role="progressbar" aria-label="全文翻译进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress-bar"></span></span>
+      </div>
+      <div class="tb-actions">
+        <button id="btn-outline" class="text-btn outline-btn" type="button" title="目录：按译文标题生成，点击跳页（O）" hidden>目录</button>
+        <button id="btn-snip" class="text-btn snip-btn" type="button" title="框选提问：在左侧 PDF 上拖选图 / 公式 / 段落，截图发给 AI 助手" hidden>框选</button>
+        <button id="btn-export-doc" class="text-btn export-doc-btn" type="button" title="导出全文译文为 PDF" hidden>导出</button>
+        <button id="btn-retry" class="text-btn retry-all" title="重试未完成的页面" hidden>重试</button>
+        <button id="btn-chat" class="text-btn chat-btn" title="打开科研助手" aria-label="科研助手" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg>
+          <span>助手</span>
+        </button>
+        <button id="btn-shortcuts" class="icon-btn shortcuts-btn" type="button" title="快捷键（?）" aria-label="阅读快捷键帮助">?</button>
+        <button id="btn-settings" class="icon-btn settings-btn" type="button" title="打开模型与供应商设置" aria-label="设置">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm8.1 3.5c0-.5-.05-1-.16-1.47l2.02-1.58-2-3.46-2.5 1a8.2 8.2 0 0 0-2.54-1.47L14.54 2h-4l-.39 3.02a8.2 8.2 0 0 0-2.54 1.47l-2.5-1-2 3.46 2.02 1.58A7 7 0 0 0 4.97 12c0 .5.05 1 .16 1.47l-2.02 1.58 2 3.46 2.5-1a8.2 8.2 0 0 0 2.54 1.47l.39 3.02h4l.39-3.02a8.2 8.2 0 0 0 2.54-1.47l2.5 1 2-3.46-2.02-1.58c.1-.47.16-.97.16-1.47Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 无文件时的引导页 -->
+  <section id="dropzone" hidden>
+    <div class="dz-card">
+      <div class="dz-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a3 3 0 0 1 3 3v14a3 3 0 0 0-3-3H4V5.5Zm16 0A2.5 2.5 0 0 0 17.5 3H14v17a3 3 0 0 1 3-3h3V5.5Z"/></svg></div>
+      <h1>开始阅读论文</h1>
+      <p>左侧保留 PDF 原版，右侧实时生成中文译文与 LaTeX 公式。拖入文件，或粘贴 PDF 链接即可开始。</p>
+      <div class="dz-actions">
+        <label class="primary-btn">
+          选择本地 PDF
+          <input type="file" id="file-input" accept="application/pdf,.pdf" hidden />
+        </label>
+      </div>
+      <div class="dz-url">
+        <input type="url" id="url-input" placeholder="或粘贴 PDF 链接，例如 https://arxiv.org/pdf/2401.02051" />
+        <button id="url-go" class="primary-btn">打开</button>
+      </div>
+      <ul class="dz-tips">
+        <li>同时读多篇：再开一个阅读器标签（插件图标 → 打开），不要在同一页硬换文件。</li>
+        <li>译文太长：工具栏点「滚动联动」→「独立滚动」，或按住 <kbd>Alt</kbd> 临时停住原文。</li>
+        <li>AI 助手可在设置里单独指定更强模型 Profile，与翻译 API 分开。</li>
+      </ul>
+      <p class="dz-tip" id="dz-config-tip"></p>
+    </div>
+  </section>
+
+  <!-- 双栏主体：左 PDF，右译文 -->
+  <main id="reader" hidden>
+    <div id="pdf-column" class="column">
+      <div id="pdf-pages"></div>
+    </div>
+    <div id="divider" title="拖动调整分栏"></div>
+    <div id="panel-column" class="column">
+      <div id="panel-pages"></div>
+    </div>
+  </main>
+
+  <!-- 阅读快捷键帮助 -->
+  <div id="shortcuts-dialog" class="shortcuts-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+    <div class="shortcuts-card">
+      <div class="shortcuts-head">
+        <h2 id="shortcuts-title">阅读快捷键</h2>
+        <button type="button" id="shortcuts-close" class="text-btn" aria-label="关闭">关闭</button>
+      </div>
+      <ul class="shortcuts-list">
+        <li><kbd>J</kbd> / <kbd>K</kbd>（或 <kbd>PageDown</kbd> / <kbd>PageUp</kbd>）下一页 / 上一页</li>
+        <li><kbd>O</kbd> 打开 / 关闭目录侧边栏</li>
+        <li><kbd>A</kbd> 打开 / 关闭科研助手</li>
+        <li><kbd>Ctrl</kbd>+<kbd>K</kbd> 搜索科研助手技能</li>
+        <li><kbd>S</kbd> 框选提问（在左侧 PDF 拖矩形，Esc 取消）</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> 切换滚动联动</li>
+        <li><kbd>Alt</kbd> 按住：临时解除联动（原文停住）</li>
+        <li>双击译文：定位左侧原文对应位置</li>
+        <li>点击「第 N 页」标题：左右栏同步跳到该页</li>
+        <li>划词：即时翻译 / 问 AI</li>
+        <li><kbd>?</kbd> 打开本帮助</li>
+        <li><kbd>Esc</kbd> 关闭帮助 / 目录 / 助手面板</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 用户状态卡；技术详情默认折叠 -->
+  <div id="hud" class="hud collapsed" role="status" aria-live="polite">
+    <div class="hud-head">
+      <span id="hud-sw" class="hud-sw busy">正在准备阅读器…</span>
+      <button id="hud-toggle" class="hud-toggle" title="显示技术详情" aria-expanded="false">详情</button>
+    </div>
+    <div id="hud-body" class="hud-body">
+      <div class="hud-line"><span>翻译中 <b id="hud-inprog">0</b></span><span>已完成 <b id="hud-done">0</b></span><span>待处理 <b id="hud-failed">0</b></span></div>
+      <div class="hud-line hud-err" id="hud-lasterr" hidden></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="../vendor/pdf.min.js"></script>
+  <script src="../vendor/marked.min.js"></script>
+  <script src="../vendor/katex/katex.min.js"></script>
+  <script src="../vendor/katex/auto-render.min.js"></script>
+  <script type="module" src="viewer.js"></script>
+</body>
+</html>

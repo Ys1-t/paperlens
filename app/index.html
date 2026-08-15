@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a7f5a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="PaperLens" />
+  <title>PaperLens · 论文双语阅读</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="../icons/icon128.png" />
+  <link rel="stylesheet" href="../src/vendor/katex/katex.min.css" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <header id="topbar">
+    <span class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a3 3 0 0 1 3 3v14a3 3 0 0 0-3-3H4V5.5Zm16 0A2.5 2.5 0 0 0 17.5 3H14v17a3 3 0 0 1 3-3h3V5.5Z"/></svg>
+      PaperLens
+    </span>
+    <span id="doc-title" class="doc-title"></span>
+    <button id="btn-search" class="icon-btn" type="button" title="搜索译文" aria-label="搜索">⌕</button>
+    <button id="btn-font" class="icon-btn" type="button" title="字号" aria-label="字号">A</button>
+    <button id="btn-theme" class="icon-btn" type="button" title="明暗" aria-label="主题">◐</button>
+    <button id="btn-settings" class="icon-btn" type="button" title="设置" aria-label="设置">⚙</button>
+  </header>
+
+  <main id="stage">
+    <!-- 空状态：选择 PDF -->
+    <section id="empty" class="empty">
+      <h1>随时随地读论文</h1>
+      <p>左右对照 · 流式翻译 · KaTeX 公式<br/>翻译结果本地缓存，重开不花钱。</p>
+      <label class="open-btn">
+        选择 PDF / 论文包
+        <input id="file-input" type="file" accept="application/pdf,.pdf,application/json,.json" hidden />
+      </label>
+      <p id="resume-hint" class="resume-hint" hidden></p>
+      <div class="home-more-actions">
+        <button type="button" id="home-library">☰ 文库</button>
+        <button type="button" id="home-write">✎ 写作</button>
+        <button type="button" id="home-agent">✧ 问这篇</button>
+      </div>
+      <p class="empty-tip">桌面扩展「导出 → 手机论文包」得到 .json 文件，<br/>在这里打开即可续读，已译页不再花钱。<br/>首次使用请先点右上角 ⚙ 配置模型 API。</p>
+      <div id="install-banner" class="install-banner" hidden>
+        <span id="install-copy"></span>
+        <button id="install-dismiss" type="button">知道了</button>
+      </div>
+    </section>
+
+    <!-- 阅读列表：每页一张卡片 -->
+    <section id="pages" class="pages" hidden></section>
+  </main>
+  <div id="read-progress" class="read-progress" hidden><i></i></div>
+
+  <div id="search-bar" class="search-bar" hidden>
+    <input id="search-input" type="search" placeholder="搜索译文…" enterkeyhint="search" />
+    <span id="search-count" class="search-count"></span>
+    <button id="search-close" class="icon-btn" type="button" aria-label="关闭搜索">✕</button>
+    <div id="search-hits" class="search-hits"></div>
+  </div>
+
+  <div id="sel-pop" class="sel-pop" hidden></div>
+
+  <!-- 全部页面预览：缩略图网格，点击跳页 -->
+  <div id="grid" class="sheet" hidden>
+    <div class="sheet-panel grid-panel" role="dialog" aria-modal="true" aria-label="全部页面预览">
+      <header class="sheet-head">
+        <strong id="grid-title">全部页面</strong>
+        <button id="grid-close" class="icon-btn" type="button" aria-label="关闭">✕</button>
+      </header>
+      <div id="grid-list" class="grid-list"></div>
+    </div>
+  </div>
+
+  <!-- 设置抽屉 -->
+  <div id="settings" class="sheet" hidden>
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="模型设置">
+      <header class="sheet-head">
+        <strong>模型设置</strong>
+        <button id="settings-close" class="icon-btn" type="button" aria-label="关闭">✕</button>
+      </header>
+      <div class="preset-row" role="group" aria-label="服务商预设">
+        <button type="button" data-preset="deepseek">DeepSeek</button>
+        <button type="button" data-preset="openai">OpenAI</button>
+        <button type="button" data-preset="proxy">中转站</button>
+        <button type="button" data-preset="gemini">Gemini</button>
+      </div>
+      <label>协议
+        <select id="cfg-protocol">
+          <option value="openai">OpenAI 兼容</option>
+          <option value="gemini">Gemini 原生</option>
+        </select>
+      </label>
+      <label>Base URL <input id="cfg-baseurl" type="url" placeholder="https://api.deepseek.com" autocapitalize="off" autocorrect="off" /></label>
+      <label>API Key <input id="cfg-apikey" type="password" placeholder="sk-…" autocapitalize="off" /></label>
+      <label>模型（需支持图片输入） <input id="cfg-model" type="text" placeholder="gemini-2.5-flash / gpt-4o-mini…" autocapitalize="off" autocorrect="off" /></label>
+      <label>目标语言 <input id="cfg-lang" type="text" value="简体中文" /></label>
+      <p class="sheet-note">Key 只保存在本机浏览器，仅发送到你填写的接口地址。个别中转站不允许网页跨域调用（CORS），报错时换官方 API 或支持 CORS 的中转站。</p>
+      <button id="settings-save" class="primary" type="button">保存</button>
+    </div>
+  </div>
+
+  <!-- Agent 抽屉（手机端） -->
+  <div id="agent-drawer" class="sheet" hidden>
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="科研 Agent">
+      <header class="sheet-head">
+        <strong>科研 Agent</strong>
+        <span id="agent-ctx" class="agent-ctx" hidden></span>
+        <button id="agent-stop" class="ghost-mini" type="button" hidden>停止</button>
+        <button id="agent-close" class="icon-btn" type="button" aria-label="关闭">✕</button>
+      </header>
+      <div id="agent-quick" class="agent-quick"></div>
+      <div id="agent-log" class="agent-log"></div>
+      <form id="agent-form">
+        <textarea id="agent-input" placeholder="问这篇论文…（Enter 发送）" rows="1"></textarea>
+        <button type="submit">发送</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <nav id="dock" hidden>
+    <button id="dock-prev" type="button" title="上一页">
+      <span class="dock-ico">‹</span>上页
+    </button>
+    <button id="dock-src" type="button" title="在每页译文下方显示原版页">
+      <span class="dock-ico">🅰</span>对照
+    </button>
+    <button id="dock-page" type="button" title="全部页面预览，点缩略图跳页">
+      <span class="dock-ico">▤</span><span id="dock-page-label">0 / 0</span>
+    </button>
+    <button id="dock-next" type="button" title="下一页">
+      <span class="dock-ico">›</span>下页
+    </button>
+    <button id="dock-agent" type="button" title="问这篇论文">
+      <span class="dock-ico">✧</span>问
+    </button>
+    <button id="dock-more" type="button" title="文库 / 写作 / 全译">
+      <span class="dock-ico">⋯</span>更多
+    </button>
+  </nav>
+
+  <div id="more-sheet" class="sheet" hidden>
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="更多">
+      <header class="sheet-head">
+        <strong>工作台</strong>
+        <button id="more-close" class="icon-btn" type="button" aria-label="关闭">✕</button>
+      </header>
+      <div class="more-actions">
+        <button type="button" id="more-library">☰ 论文文库</button>
+        <button type="button" id="more-write">✎ 写作草稿</button>
+        <button type="button" id="more-translate">↻ 补译未译页</button>
+      </div>
+      <div id="more-body" class="more-body"></div>
+    </div>
+  </div>
+
+  <script src="../src/vendor/pdf.min.js"></script>
+  <script src="../src/vendor/marked.min.js"></script>
+  <script src="../src/vendor/katex/katex.min.js"></script>
+  <script src="../src/vendor/katex/auto-render.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
